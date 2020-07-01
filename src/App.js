@@ -11,7 +11,7 @@ import filterSpam, {resetFilter, assignProbability} from "./spamFilter";
 /*
 instructions:
 emails are in plain text and are named ./public/emails/email#.txt
-They have a specific format(my solution is not so robust in that way, but it could be modified to be), but if you wanted to add more, please format them the same way
+They have a specific format, but if you wanted to add more, please format them the same way(this solution is not so robust in that way)
 to run the filter, just click the yellow "FILTER THESE EMAILS!" button
 you can play with the sliders to determine the threshold score needed for two emails to be sorted into the same bucket, and the number of similar emails needed to constitute "SPAM"
 
