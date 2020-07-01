@@ -41,7 +41,7 @@ export default async function filterSpam(filePath) {
       bodyText = bodyText.replace(/[^A-Za-z0-9]/gim, " ").replace(/\s+/g, " ");
 
       //save the length of our body for scoring in step 6 later
-      var bodyLength=bodyText.length;
+      var bodyLength = bodyText.length;
 
       //3. we are only going to check the first 400 characters of each email.
       //If their first 400 characters don't match significantly enough,
@@ -56,10 +56,9 @@ export default async function filterSpam(filePath) {
         emailSet.add(word);
       });
 
-
       var maxScore = 0;
       var maxBucketIndex = 0;
-      
+
       /*5.
       Get initial score, by taking the set of words from the email, taking the size, then removing all the words from the bucket word set
       the score is a ratio of endSize/startSize, so remaining words / starting words, then scaled up to be a percentage out of 100.
@@ -80,16 +79,14 @@ export default async function filterSpam(filePath) {
           //calculate the ratio, scale to 100, take the difference out of 100 to get % similarity
           thisScore = 100 - (100 * endSize) / startSize;
 
-          
-
-        /* 6. modify score by length
+          /* 6. modify score by length
         //if the email is not within 30% the length of the buckets email length, there is a score reduction, up to half, 
         //since they are deemed to be not so similar
         reasoning: there may be highly variable length spam emails, but I dont want them to catch non-spam emails unnecessarily
         if someone submitted an email that was a complete English dictionary, and it was bucketized, it could flag all following emails as spam,
         therefore, I determined that the length of the email needs to be factored into the score as well
         */
-        var bucketLength = bucket.bodyLength;
+          var bucketLength = bucket.bodyLength;
           if (
             !(
               bodyLength <= bucketLength * 1.3 &&
@@ -97,11 +94,10 @@ export default async function filterSpam(filePath) {
             )
           ) {
             thisScore =
-            bodyLength > bucketLength
-                ? thisScore*(0.5 + (0.5 * (bucketLength / bodyLength)))
-                : thisScore*(0.5 + (0.5 * (bodyLength / bucketLength)));
+              bodyLength > bucketLength
+                ? thisScore * (0.5 + 0.5 * (bucketLength / bodyLength))
+                : thisScore * (0.5 + 0.5 * (bodyLength / bucketLength));
           }
-
 
           /*get max score among all buckets, and keep track of which bucket index scored highest*/
           if (thisScore > maxScore) {
@@ -110,17 +106,24 @@ export default async function filterSpam(filePath) {
           }
         });
 
+        /*7. checks if score is above the spamThreshold to be similar enough to constitute 'spam'. 
+        This value comes from the first slider in the app, defaults to 70
+        */
         if (maxScore < spamThreshold) {
-          //not similar enough to any current buckets to live in the same bucket.
-          var newBucket = { wordSet: emailSet, bodyLength:bodyLength, emails: 1 };
+          //if it is not similar enough to any current buckets, it creates a new bucket for itself
+          var newBucket = {
+            wordSet: emailSet,
+            bodyLength: bodyLength,
+            emails: 1,
+          };
           buckets.push(newBucket);
-          maxBucketIndex = buckets.length-1;
+          maxBucketIndex = buckets.length - 1;
         } else {
-          //It fits in a bucket! increase bucket email count
-
+          //If it is similar enough, it is added to the bucket that it scored highest with
           buckets[maxBucketIndex].emails++;
-
-          //bucket.wordSet.add();
+          //Note:, it is possible to add code here to update the buckets with new words as it is filled with more emails,
+          //to account for the small differenced spammers use to circumnavigate filters
+          //I did not take the logic that far in this implementation
         }
       } else {
         //there are no buckets yet, so the first email gets its own
@@ -128,7 +131,7 @@ export default async function filterSpam(filePath) {
         buckets.push(newBucket);
         maxBucketIndex = 0;
       }
-
+      //score is rounded to 2 decimal places
       score = Math.round(100 * maxScore) / 100;
       bucket = maxBucketIndex;
     });
@@ -142,12 +145,14 @@ The logic here is simple: if there are too many emails in a bucket, they should 
 20% of probability is similarity score, calculated during bucketization above, 80% is determined by # of emails in the bucket
 It is just a flat ratio of emails in bucket / (number of similar emails needed to flag something as spam) or 100
 */
-export function assignProbability(bucketNum,score) {
-  console.log(buckets[bucketNum].emails+" "+ spamCount);
-  var prob= 20*(score/100) + 80*(buckets[bucketNum].emails / spamCount);
-  return prob>100? 100:prob;
+export function assignProbability(bucketNum, score) {
+  console.log(buckets[bucketNum].emails + " " + spamCount);
+  var prob = 20 * (score / 100) + 80 * (buckets[bucketNum].emails / spamCount);
+  prob = Math.round(100 * prob) / 100;
+  return prob > 100 ? 100 : prob;
 }
 
+/*resets buckets each time*/
 export function resetFilter(spamScore, spamC) {
   buckets = [];
   spamThreshold = spamScore;
