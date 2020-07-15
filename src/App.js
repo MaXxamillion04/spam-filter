@@ -5,13 +5,13 @@ import Button from "react-bootstrap/Button";
 import Slider from "@material-ui/core/Slider";
 //import { filterSpam } from "./filterSpam.js";
 import { CircularProgress } from "@material-ui/core";
-import filterSpam, {resetFilter, assignProbability} from "./spamFilter";
+import {filterSpam, resetFilter, assignProbability} from "./spamFilter";
 
 
 /*
 instructions:
 emails are in plain text and are named ./public/emails/email#.txt
-They have a specific format, but if you wanted to add more, please format them the same way(this solution is not so robust in that way)
+They have a specific format, but if you wanted to add more, please format them the same way. IRL this would be resolved using some kind of query/schema
 to run the filter, just click the yellow "FILTER THESE EMAILS!" button
 you can play with the sliders to determine the threshold score needed for two emails to be sorted into the same bucket, and the number of similar emails needed to constitute "SPAM"
 
@@ -45,10 +45,13 @@ function App() {
   It also acts as a scanner to determine how many email files we have
 
   This is just for the UI of this App, the actual filter code lives in filterSpam.js
-
   */
   useEffect(async () => {
-    var newEmailArray = [];
+    initializeEmailTable();
+  }, []);
+
+async function initializeEmailTable() {
+  var newEmailArray = [];
     var moreFiles = true;
     //scans until it cannot find another "email#.txt" file
     for (var x = 0; moreFiles; x++) {
@@ -114,8 +117,8 @@ function App() {
         });
       updateEmailArray([...newEmailArray]);
     }
-  }, []);
-
+}
+  
 /*
 debugging code  
   useEffect(()=>{
@@ -127,7 +130,7 @@ debugging code
   /*
   this creates the components for the UI table
   */
-  function populateEmailTable() {
+  function renderEmailTable() {
     if (emailArray.length === 0) {
       return (
         <tr>
@@ -172,7 +175,7 @@ debugging code
           <td>{emailRow.score}</td>
           <td>{emailRow.bucket}</td>
           <td>{emailRow.probability}%</td>
-          <td>
+          <td className="tableItem">
             
               {emailRow.scored
                 ? isit
@@ -272,7 +275,7 @@ then we pass each email to be assigned a probability based on its score and the 
               <th>Is It Spam?</th>
             </tr>
           </thead>
-          <tbody>{populateEmailTable()}</tbody>
+          <tbody>{renderEmailTable()}</tbody>
         </table>
         <Button onClick={(event)=>activateSpamFilter(event)} variant="warning" size="lg">FILTER THESE EMAILS!</Button>
         <span>How similar is too similar?</span>

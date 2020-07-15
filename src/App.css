@@ -24,6 +24,11 @@
   font-size: calc(10px + 1.5vmin);
   color: white;
 }
+.tableItem{
+  background-color: #009999;
+  color: green;
+
+}
 .slider {
   max-width: 50%;
 }
